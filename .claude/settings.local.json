@@ -4,7 +4,8 @@
       "Bash(Start-Sleep -Seconds 5)",
       "Bash(Get-Content \"C:\\\\Users\\\\USER\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-USER-Desktop-moveease\\\\91071d7a-0173-4c01-a89e-8c646aa976aa\\\\tasks\\\\b2ychoijr.output\" -ErrorAction SilentlyContinue)",
       "Bash(Get-Content \"C:\\\\Users\\\\USER\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-USER-Desktop-moveease\\\\91071d7a-0173-4c01-a89e-8c646aa976aa\\\\tasks\\\\bunrm5kwi.output\" -ErrorAction SilentlyContinue)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(git submodule *)"
     ]
   }
 }
