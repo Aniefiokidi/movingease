@@ -106,7 +106,7 @@ export default function Home() {
               <h1 className="mt-3 text-4xl font-black leading-tight text-[#1B2A4A] md:text-5xl">Reliable Moving Services Across New Brunswick</h1>
               <p className="mt-4 max-w-xl text-slate-600">Get a fast, realistic moving estimate and submit your booking request in minutes.</p>
               <div className="mt-8 flex flex-wrap gap-3">
-                <Link to="/quote" className="rounded-xl bg-[#C0272D] px-5 py-3 font-semibold text-white shadow-md transition hover:bg-[#a32026]">Get Free Estimate</Link>
+                <Link to="/request" className="rounded-xl bg-[#C0272D] px-5 py-3 font-semibold text-white shadow-md transition hover:bg-[#a32026]">Request a Move</Link>
                 <a href="tel:+15064719393" className="rounded-xl border border-[#1B2A4A]/20 px-5 py-3 font-semibold text-[#1B2A4A] transition hover:bg-[#1B2A4A]/5">Call Now</a>
               </div>
             </div>

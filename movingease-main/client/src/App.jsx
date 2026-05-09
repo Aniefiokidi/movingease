@@ -3,6 +3,7 @@ import Navbar from "./components/layout/Navbar";
 import Footer from "./components/layout/Footer";
 import Home from "./pages/Home";
 import Quote from "./pages/Quote";
+import Request from "./pages/Request";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
 import AdminBookings from "./pages/Admin/Bookings";
 import NotFound from "./pages/NotFound";
@@ -15,6 +16,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/quote" element={<Quote />} />
+          <Route path="/request" element={<Request />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin/bookings" element={<AdminBookings />} />
 

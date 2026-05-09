@@ -15,6 +15,7 @@ import userRoutes from "./routes/user.routes.js";
 import reviewRoutes from "./routes/review.routes.js";
 import testimonialRoutes from "./routes/testimonial.routes.js";
 import mapsRoutes from "./routes/maps.routes.js";
+import requestRoutes from "./routes/request.routes.js";
 import { errorHandler, notFound } from "./middleware/error.middleware.js";
 import { startReminderCron } from "./services/reminder.service.js";
 
@@ -42,6 +43,7 @@ app.use(morgan("dev"));
 app.get("/api/health", (_req, res) => res.json({ success: true, message: "OK", data: null }));
 app.use("/api/auth", authRoutes);
 app.use("/api/bookings", bookingRoutes);
+app.use("/api/requests", requestRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/reviews", reviewRoutes);
