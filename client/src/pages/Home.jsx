@@ -104,9 +104,9 @@ export default function Home() {
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#C0272D]">Edge Moving Solution Ltd.</p>
               <h1 className="mt-3 text-4xl font-black leading-tight text-[#1B2A4A] md:text-5xl">Reliable Moving Services Across New Brunswick</h1>
-              <p className="mt-4 max-w-xl text-slate-600">Get a fast, realistic moving estimate and submit your booking request in minutes.</p>
+              <p className="mt-4 max-w-xl text-slate-600">Submit your moving request in minutes and we'll get back to you within 24 hours.</p>
               <div className="mt-8 flex flex-wrap gap-3">
-                <Link to="/quote" className="rounded-xl bg-[#C0272D] px-5 py-3 font-semibold text-white shadow-md transition hover:bg-[#a32026]">Get Free Estimate</Link>
+                <Link to="/quote" className="rounded-xl bg-[#C0272D] px-5 py-3 font-semibold text-white shadow-md transition hover:bg-[#a32026]">Request a Move</Link>
                 <a href="tel:+15064719393" className="rounded-xl border border-[#1B2A4A]/20 px-5 py-3 font-semibold text-[#1B2A4A] transition hover:bg-[#1B2A4A]/5">Call Now</a>
               </div>
             </div>
@@ -136,11 +136,15 @@ export default function Home() {
       <section className="section-wrap py-8">
         <h2 className="text-3xl font-bold text-[#1B2A4A]">How It Works</h2>
         <div className="mt-6 grid gap-4 md:grid-cols-3">
-          {["Step 1: Get Estimate", "Step 2: Book Move", "Step 3: We Move You"].map((text, index) => (
-            <Card key={text} className="p-5">
+          {[
+            { title: "Submit a Request", desc: "Fill out our simple form with your contact info, move details, and items." },
+            { title: "We Confirm with You", desc: "Our team reviews your request and contacts you within 24 hours to confirm." },
+            { title: "We Move You", desc: "Our professional movers show up on time and handle your move with care." }
+          ].map((item, index) => (
+            <Card key={item.title} className="p-5">
               <p className="text-sm font-semibold text-[#C0272D]">Step {index + 1}</p>
-              <p className="mt-2 text-lg font-bold text-[#1B2A4A]">{text}</p>
-              <p className="mt-2 text-sm text-slate-600">Transparent pricing and quick booking requests for homes and businesses.</p>
+              <p className="mt-2 text-lg font-bold text-[#1B2A4A]">{item.title}</p>
+              <p className="mt-2 text-sm text-slate-600">{item.desc}</p>
             </Card>
           ))}
         </div>
@@ -151,7 +155,7 @@ export default function Home() {
         <div className="mt-6 grid gap-4 md:grid-cols-3">
           {[
             { title: "Reliable", text: "On-time teams and clear communication from quote to move day." },
-            { title: "Affordable", text: "Smart estimate engine with realistic rates and no hidden website fees." },
+            { title: "Affordable", text: "Competitive rates with no hidden fees — we're upfront about everything." },
             { title: "Professional Movers", text: "Trained movers equipped for residential and commercial jobs." }
           ].map((item) => (
             <Card key={item.title} className="p-5">
@@ -249,8 +253,8 @@ export default function Home() {
       <section className="section-wrap py-16">
         <div className="rounded-3xl bg-[#1B2A4A] px-8 py-12 text-center text-white shadow-md">
           <h3 className="text-3xl font-black">Ready to plan your move?</h3>
-          <p className="mt-3 text-slate-200">Get your free estimate and submit your booking request today.</p>
-          <Link to="/quote" className="mt-6 inline-block rounded-xl bg-[#C0272D] px-6 py-3 font-semibold text-white transition hover:bg-[#a32026]">Get Estimate</Link>
+          <p className="mt-3 text-slate-200">Submit your request today and we'll be in touch within 24 hours.</p>
+          <Link to="/quote" className="mt-6 inline-block rounded-xl bg-[#C0272D] px-6 py-3 font-semibold text-white transition hover:bg-[#a32026]">Request a Move</Link>
         </div>
       </section>
     </main>

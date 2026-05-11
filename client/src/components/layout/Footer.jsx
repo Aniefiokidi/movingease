@@ -3,8 +3,12 @@ export default function Footer() {
     <footer className="mt-16 bg-[#1B2A4A] text-white">
       <div className="mx-auto grid w-full max-w-7xl gap-6 px-6 py-12 md:grid-cols-3">
         <div>
-          <p className="text-lg font-bold">Edge Moving Solution Ltd.</p>
-          <p className="mt-2 text-sm text-slate-200">Professional residential and office moving services across New Brunswick.</p>
+          <img
+            src="https://res.cloudinary.com/dgqxt06km/image/upload/c_crop,g_north_west,h_137,w_351,x_135,y_106/WhatsApp_Image_2026-05-11_at_5.23.53_AM-removebg-preview_ibu9at.png"
+            alt="Edge Moving Solutions Ltd."
+            className="h-14 w-auto object-contain brightness-0 invert"
+          />
+          <p className="mt-3 text-sm text-slate-200">Professional residential and office moving services across New Brunswick.</p>
         </div>
         <div>
           <p className="text-sm font-semibold uppercase tracking-wide text-slate-200">Contact</p>

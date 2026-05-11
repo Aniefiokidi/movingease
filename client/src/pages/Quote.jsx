@@ -1,306 +1,346 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import Button from "../components/common/Button";
 import Card from "../components/common/Card";
 import Stepper from "../components/common/Stepper";
-import ItemSelector from "../components/booking/ItemSelector";
-import PriceSummary from "../components/booking/PriceSummary";
 import { createBooking } from "../services/booking.service";
-import { ITEM_CATALOG, PACKAGE_OPTIONS, SERVICE_TYPES } from "../utils/itemCatalog";
-import { calculateLivePrice } from "../utils/pricingEngine";
+
+const PREFERRED_TIMES = ["Morning (8am–12pm)", "Afternoon (12pm–5pm)", "Evening (5pm–8pm)"];
 
 export default function Quote() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [createdBooking, setCreatedBooking] = useState(null);
+  const [submitted, setSubmitted] = useState(false);
+  const [bookingRef, setBookingRef] = useState("");
 
-  const [form, setForm] = useState({
-    serviceType: "residential",
-    pricingMode: "package",
-    selectedPackage: "quick_move",
-    selectedItems: [],
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    moveDate: "",
-    preferredTime: "Morning",
-    distanceKm: 10,
-    urgency: "standard",
-    pickupAddress: "",
-    dropoffAddress: "",
-    pickupFloor: 1,
-    dropoffFloor: 1,
-    pickupHasElevator: true,
-    dropoffHasElevator: true,
-    pickupHasNarrowStairs: false,
-    dropoffHasNarrowStairs: false,
-    pickupParkingDistance: "close",
-    dropoffParkingDistance: "close",
-    discountAmount: 0
-  });
+  const [contact, setContact] = useState({ firstName: "", lastName: "", email: "", phone: "" });
+  const [move, setMove] = useState({ pickupAddress: "", dropoffAddress: "", moveDate: "", preferredTime: PREFERRED_TIMES[0] });
+  const [items, setItems] = useState([]);
+  const [newItem, setNewItem] = useState({ label: "", quantity: 1, isFragile: false, description: "" });
 
-  const steps = ["Service", "Pricing Mode", "Move Details", "Contact", "Review"];
-  const price = useMemo(() => calculateLivePrice(form), [form]);
+  const setContactVal = (k, v) => setContact((c) => ({ ...c, [k]: v }));
+  const setMoveVal = (k, v) => setMove((m) => ({ ...m, [k]: v }));
 
-  const setValue = (key, value) => setForm((current) => ({ ...current, [key]: value }));
-
-  const setPackage = (selectedPackage) => {
-    const pkg = PACKAGE_OPTIONS.find((item) => item.key === selectedPackage);
-    setForm((current) => ({
-      ...current,
-      selectedPackage,
-      pricingMode: "package",
-      truckType: pkg?.truckType,
-      workersCount: pkg?.workersCount
-    }));
+  const addItem = () => {
+    if (!newItem.label.trim()) return;
+    setItems((prev) => [...prev, { ...newItem, label: newItem.label.trim() }]);
+    setNewItem({ label: "", quantity: 1, isFragile: false, description: "" });
   };
 
-  const loadPackageIntoItems = () => {
-    const pack = PACKAGE_OPTIONS.find((item) => item.key === form.selectedPackage);
-    if (!pack) return [];
+  const removeItem = (index) => setItems((prev) => prev.filter((_, i) => i !== index));
 
-    if (pack.key === "quick_move") return [{ ...ITEM_CATALOG.find((item) => item.key === "sofa_2"), itemKey: "sofa_2", quantity: 1 }].map(normalizeItem);
-    if (pack.key === "small_move") return [
-      { ...ITEM_CATALOG.find((item) => item.key === "bed_single"), itemKey: "bed_single", quantity: 1 },
-      { ...ITEM_CATALOG.find((item) => item.key === "table"), itemKey: "table", quantity: 1 },
-      { ...ITEM_CATALOG.find((item) => item.key === "boxes"), itemKey: "boxes", quantity: 3 }
-    ].map(normalizeItem);
-    if (pack.key === "medium_move") return [
-      { ...ITEM_CATALOG.find((item) => item.key === "sofa_3"), itemKey: "sofa_3", quantity: 1 },
-      { ...ITEM_CATALOG.find((item) => item.key === "bed_queen"), itemKey: "bed_queen", quantity: 1 },
-      { ...ITEM_CATALOG.find((item) => item.key === "fridge_small"), itemKey: "fridge_small", quantity: 1 },
-      { ...ITEM_CATALOG.find((item) => item.key === "boxes"), itemKey: "boxes", quantity: 6 }
-    ].map(normalizeItem);
+  const step1Valid = contact.firstName && contact.lastName && contact.email && contact.phone;
+  const step2Valid = move.pickupAddress && move.dropoffAddress && move.moveDate;
+  const step3Valid = items.length > 0;
 
-    return [
-      { ...ITEM_CATALOG.find((item) => item.key === "sofa_3"), itemKey: "sofa_3", quantity: 2 },
-      { ...ITEM_CATALOG.find((item) => item.key === "bed_king"), itemKey: "bed_king", quantity: 1 },
-      { ...ITEM_CATALOG.find((item) => item.key === "fridge_large"), itemKey: "fridge_large", quantity: 1 },
-      { ...ITEM_CATALOG.find((item) => item.key === "washing_machine"), itemKey: "washing_machine", quantity: 1 },
-      { ...ITEM_CATALOG.find((item) => item.key === "boxes"), itemKey: "boxes", quantity: 10 }
-    ].map(normalizeItem);
-  };
-
-  const normalizeSelectedItems = (items = []) => items.map(normalizeItem).filter((item) => item.quantity > 0);
-
-  async function submitBooking() {
+  async function submit() {
     setError("");
     setLoading(true);
     try {
-      const selectedItems = form.pricingMode === "package" ? loadPackageIntoItems() : normalizeSelectedItems(form.selectedItems);
       const payload = {
-        serviceType: form.serviceType,
-        pricingMode: form.pricingMode,
-        selectedPackage: form.pricingMode === "package" ? form.selectedPackage : undefined,
-        selectedItems,
-        distanceKm: Number(form.distanceKm),
-        urgency: form.urgency,
-        truckType: price.recommendedTruck,
-        workersCount: price.recommendedWorkers,
-        discountAmount: Number(form.discountAmount || 0),
-        hasFragileItems: selectedItems.some((item) => item.isFragile),
-        pickup: {
-          address: form.pickupAddress,
-          floor: Number(form.pickupFloor),
-          hasElevator: Boolean(form.pickupHasElevator),
-          parkingDistance: form.pickupParkingDistance,
-          hasNarrowStairs: Boolean(form.pickupHasNarrowStairs)
-        },
-        dropoff: {
-          address: form.dropoffAddress,
-          floor: Number(form.dropoffFloor),
-          hasElevator: Boolean(form.dropoffHasElevator),
-          parkingDistance: form.dropoffParkingDistance,
-          hasNarrowStairs: Boolean(form.dropoffHasNarrowStairs)
-        },
-        moveDate: form.moveDate,
-        preferredTime: form.preferredTime,
+        serviceType: "residential",
+        pricingMode: "custom",
+        selectedItems: items.map((item, i) => ({
+          itemKey: `item_${i}`,
+          label: item.label,
+          quantity: Number(item.quantity),
+          isFragile: item.isFragile,
+          description: item.description,
+          volumeScore: 1,
+          weightScore: 1,
+          isHeavy: false
+        })),
+        distanceKm: 0,
+        urgency: "standard",
+        truckType: "medium",
+        workersCount: 2,
+        hasFragileItems: items.some((i) => i.isFragile),
+        pickup: { address: move.pickupAddress, floor: 1, hasElevator: false, parkingDistance: "close", hasNarrowStairs: false },
+        dropoff: { address: move.dropoffAddress, floor: 1, hasElevator: false, parkingDistance: "close", hasNarrowStairs: false },
+        moveDate: move.moveDate,
+        preferredTime: move.preferredTime,
         customerSnapshot: {
-          firstName: form.firstName,
-          lastName: form.lastName,
-          email: form.email,
-          phone: form.phone,
-          address: { street: form.pickupAddress, city: "", province: "NB", postalCode: "" },
-          emergencyContact: { name: "N/A", phone: form.phone, relationship: "Self" }
+          firstName: contact.firstName,
+          lastName: contact.lastName,
+          email: contact.email,
+          phone: contact.phone,
+          address: { street: move.pickupAddress, city: "", province: "NB", postalCode: "" },
+          emergencyContact: { name: "N/A", phone: contact.phone, relationship: "Self" }
         }
       };
 
-      const response = await createBooking(payload);
-      setCreatedBooking(response.data.data);
-      setStep(5);
+      const res = await createBooking(payload);
+      setBookingRef(res.data.data.bookingRef);
+      setSubmitted(true);
     } catch (e) {
-      setError(e?.response?.data?.message || "Unable to create booking right now.");
+      setError(e?.response?.data?.message || "Unable to submit your request. Please try again.");
     } finally {
       setLoading(false);
     }
   }
 
+  if (submitted) {
+    return (
+      <section className="section-wrap py-16">
+        <div className="mx-auto max-w-lg text-center">
+          <div className="mb-6 flex justify-center">
+            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100">
+              <svg className="h-10 w-10 text-emerald-600" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>
+            </div>
+          </div>
+          <h1 className="text-3xl font-bold text-[#1B2A4A]">Request Received</h1>
+          <p className="mt-3 text-slate-600">Thank you! We've received your moving request. Our team will review the details and reach out to you within 24 hours to confirm and finalize everything.</p>
+          <p className="mt-4 inline-block rounded-xl bg-[#1B2A4A]/5 px-4 py-2 font-mono text-sm font-semibold text-[#1B2A4A]">Ref: {bookingRef}</p>
+          <div className="mt-8 flex justify-center gap-3">
+            <Link to="/" className="rounded-xl bg-[#1B2A4A] px-6 py-3 text-sm font-semibold text-white hover:bg-[#0f1e35] transition">Back to Home</Link>
+            <Link to="/quote" className="rounded-xl border border-[#1B2A4A]/20 px-6 py-3 text-sm font-semibold text-[#1B2A4A] hover:bg-slate-50 transition">New Request</Link>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="section-wrap py-10">
-      <div className="grid gap-6 lg:grid-cols-[1.5fr_0.9fr]">
-        <div className="space-y-4">
-          <Stepper steps={steps} currentStep={step} />
+      <div className="mx-auto max-w-2xl">
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl font-bold text-[#1B2A4A]">Request a Move</h1>
+          <p className="mt-2 text-slate-500">Fill out the form below and we'll get back to you within 24 hours.</p>
+        </div>
 
+        <Stepper steps={["Contact", "Move Details", "Items", "Review"]} currentStep={step} />
+
+        <div className="mt-6">
           {step === 1 && (
-            <Card className="p-6">
-              <h2 className="text-2xl font-bold text-[#1B2A4A]">Step 1: Choose service type</h2>
-              <div className="mt-4 grid gap-3 md:grid-cols-2">
-                {SERVICE_TYPES.map((service) => (
-                  <button
-                    type="button"
-                    key={service.key}
-                    onClick={() => setValue("serviceType", service.key)}
-                    className={`rounded-xl border p-4 text-left transition ${form.serviceType === service.key ? "border-[#1B2A4A] bg-[#1B2A4A]/5" : "border-slate-200 hover:border-[#1B2A4A]/30"}`}
-                  >
-                    <p className="font-semibold text-[#1B2A4A]">{service.title}</p>
-                    <p className="mt-1 text-sm text-slate-500">{service.description}</p>
-                  </button>
-                ))}
+            <Card className="p-8">
+              <h2 className="text-xl font-bold text-[#1B2A4A]">Your Contact Information</h2>
+              <p className="mt-1 text-sm text-slate-500">We'll use this to follow up with you about your move.</p>
+
+              <div className="mt-6 grid gap-4 md:grid-cols-2">
+                <Field label="First Name" required>
+                  <input className={inputCls} placeholder="John" value={contact.firstName} onChange={(e) => setContactVal("firstName", e.target.value)} />
+                </Field>
+                <Field label="Last Name" required>
+                  <input className={inputCls} placeholder="Doe" value={contact.lastName} onChange={(e) => setContactVal("lastName", e.target.value)} />
+                </Field>
+                <Field label="Email Address" required>
+                  <input className={inputCls} type="email" placeholder="john@example.com" value={contact.email} onChange={(e) => setContactVal("email", e.target.value)} />
+                </Field>
+                <Field label="Phone Number" required>
+                  <input className={inputCls} type="tel" placeholder="(506) 000-0000" value={contact.phone} onChange={(e) => setContactVal("phone", e.target.value)} />
+                </Field>
               </div>
-              <div className="mt-6 flex justify-end"><Button onClick={() => setStep(2)}>Continue</Button></div>
+
+              <div className="mt-8 flex justify-end">
+                <Button onClick={() => setStep(2)} disabled={!step1Valid}>Continue</Button>
+              </div>
             </Card>
           )}
 
           {step === 2 && (
-            <Card className="p-6">
-              <h2 className="text-2xl font-bold text-[#1B2A4A]">Step 2: Pricing mode</h2>
-              <div className="mt-4 flex gap-3">
-                <Button type="button" variant={form.pricingMode === "package" ? "primary" : "secondary"} onClick={() => setValue("pricingMode", "package")}>Package estimate</Button>
-                <Button type="button" variant={form.pricingMode === "custom" ? "primary" : "secondary"} onClick={() => setValue("pricingMode", "custom")}>Custom item selection</Button>
+            <Card className="p-8">
+              <h2 className="text-xl font-bold text-[#1B2A4A]">Move Details</h2>
+              <p className="mt-1 text-sm text-slate-500">Tell us where you're moving from and to.</p>
+
+              <div className="mt-6 space-y-4">
+                <Field label="Pickup Address" required>
+                  <input className={inputCls} placeholder="123 Main St, Moncton, NB" value={move.pickupAddress} onChange={(e) => setMoveVal("pickupAddress", e.target.value)} />
+                </Field>
+                <Field label="Dropoff Address" required>
+                  <input className={inputCls} placeholder="456 Elm St, Fredericton, NB" value={move.dropoffAddress} onChange={(e) => setMoveVal("dropoffAddress", e.target.value)} />
+                </Field>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Field label="Preferred Move Date" required>
+                    <input className={inputCls} type="date" value={move.moveDate} onChange={(e) => setMoveVal("moveDate", e.target.value)} />
+                  </Field>
+                  <Field label="Preferred Time">
+                    <select className={inputCls} value={move.preferredTime} onChange={(e) => setMoveVal("preferredTime", e.target.value)}>
+                      {PREFERRED_TIMES.map((t) => <option key={t}>{t}</option>)}
+                    </select>
+                  </Field>
+                </div>
               </div>
 
-              {form.pricingMode === "package" ? (
-                <div className="mt-5 grid gap-3 md:grid-cols-2">
-                  {PACKAGE_OPTIONS.map((pkg) => (
-                    <button
-                      key={pkg.key}
-                      type="button"
-                      onClick={() => setPackage(pkg.key)}
-                      className={`rounded-xl border p-4 text-left transition ${form.selectedPackage === pkg.key ? "border-[#1B2A4A] bg-[#1B2A4A]/5" : "border-slate-200 hover:border-[#1B2A4A]/30"}`}
-                    >
-                      <p className="font-semibold text-[#1B2A4A]">{pkg.name}</p>
-                      <p className="mt-1 text-sm text-slate-500">{pkg.includes}</p>
-                      <p className="mt-1 text-sm font-semibold text-[#C0272D]">CAD ${(pkg.baseMin / 100).toFixed(0)} - ${(pkg.baseMax / 100).toFixed(0)}</p>
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <div className="mt-5"><ItemSelector selectedItems={form.selectedItems} onChange={(selectedItems) => setValue("selectedItems", selectedItems)} /></div>
-              )}
-
-              <div className="mt-6 flex justify-between">
-                <Button type="button" variant="secondary" onClick={() => setStep(1)}>Back</Button>
-                <Button type="button" onClick={() => setStep(3)}>Continue</Button>
+              <div className="mt-8 flex justify-between">
+                <Button variant="secondary" onClick={() => setStep(1)}>Back</Button>
+                <Button onClick={() => setStep(3)} disabled={!step2Valid}>Continue</Button>
               </div>
             </Card>
           )}
 
           {step === 3 && (
-            <Card className="p-6">
-              <h2 className="text-2xl font-bold text-[#1B2A4A]">Step 3: Move details</h2>
-              <div className="mt-4 grid gap-3 md:grid-cols-2">
-                <input className="rounded-xl border border-slate-200 px-3 py-2" placeholder="Pickup address" value={form.pickupAddress} onChange={(e) => setValue("pickupAddress", e.target.value)} />
-                <input className="rounded-xl border border-slate-200 px-3 py-2" placeholder="Dropoff address" value={form.dropoffAddress} onChange={(e) => setValue("dropoffAddress", e.target.value)} />
-                <input className="rounded-xl border border-slate-200 px-3 py-2" type="number" min="1" placeholder="Distance (km)" value={form.distanceKm} onChange={(e) => setValue("distanceKm", e.target.value)} />
-                <input className="rounded-xl border border-slate-200 px-3 py-2" type="date" value={form.moveDate} onChange={(e) => setValue("moveDate", e.target.value)} />
-                <select className="rounded-xl border border-slate-200 px-3 py-2" value={form.preferredTime} onChange={(e) => setValue("preferredTime", e.target.value)}>
-                  <option>Morning</option>
-                  <option>Afternoon</option>
-                  <option>Evening</option>
-                </select>
-                <select className="rounded-xl border border-slate-200 px-3 py-2" value={form.urgency} onChange={(e) => setValue("urgency", e.target.value)}>
-                  <option value="standard">Standard</option>
-                  <option value="same_day">Same Day</option>
-                  <option value="express">Express</option>
-                </select>
+            <Card className="p-8">
+              <h2 className="text-xl font-bold text-[#1B2A4A]">Items to Move</h2>
+              <p className="mt-1 text-sm text-slate-500">List everything you need moved. Add as many items as needed.</p>
+
+              {items.length > 0 && (
+                <div className="mt-5 space-y-2">
+                  {items.map((item, i) => (
+                    <div key={i} className="flex items-start justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                      <div className="flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-semibold text-[#1B2A4A]">{item.label}</span>
+                          <span className="rounded-full bg-[#1B2A4A]/10 px-2 py-0.5 text-xs font-medium text-[#1B2A4A]">Qty {item.quantity}</span>
+                          {item.isFragile && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">Fragile</span>}
+                        </div>
+                        {item.description && <p className="mt-1 text-xs text-slate-500">{item.description}</p>}
+                      </div>
+                      <button onClick={() => removeItem(i)} className="ml-3 mt-0.5 text-slate-400 transition hover:text-red-500">
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="mt-5 rounded-xl border border-dashed border-slate-300 p-5">
+                <p className="mb-3 text-sm font-semibold text-slate-700">Add an Item</p>
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="md:col-span-2">
+                    <label className="mb-1 block text-xs font-medium text-slate-600">Item Name <span className="text-red-500">*</span></label>
+                    <input
+                      className={inputCls}
+                      placeholder="e.g. Sofa, Refrigerator, Box of books…"
+                      value={newItem.label}
+                      onChange={(e) => setNewItem((n) => ({ ...n, label: e.target.value }))}
+                      onKeyDown={(e) => e.key === "Enter" && addItem()}
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-slate-600">Quantity</label>
+                    <input
+                      className={inputCls}
+                      type="number"
+                      min="1"
+                      value={newItem.quantity}
+                      onChange={(e) => setNewItem((n) => ({ ...n, quantity: Number(e.target.value) }))}
+                    />
+                  </div>
+                  <div className="flex items-end pb-0.5">
+                    <label className="flex cursor-pointer select-none items-center gap-2 text-sm text-slate-700">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 rounded accent-[#1B2A4A]"
+                        checked={newItem.isFragile}
+                        onChange={(e) => setNewItem((n) => ({ ...n, isFragile: e.target.checked }))}
+                      />
+                      This item is fragile
+                    </label>
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="mb-1 block text-xs font-medium text-slate-600">Description <span className="text-slate-400">(optional)</span></label>
+                    <textarea
+                      className={inputCls}
+                      rows={2}
+                      placeholder="Any extra details about this item…"
+                      value={newItem.description}
+                      onChange={(e) => setNewItem((n) => ({ ...n, description: e.target.value }))}
+                    />
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={addItem}
+                  disabled={!newItem.label.trim()}
+                  className="mt-3 flex items-center gap-1.5 rounded-xl border border-[#1B2A4A]/20 px-4 py-2 text-sm font-semibold text-[#1B2A4A] transition hover:bg-[#1B2A4A]/5 disabled:opacity-40"
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                  </svg>
+                  Add Item
+                </button>
               </div>
 
-              <div className="mt-4 grid gap-3 md:grid-cols-2">
-                <input className="rounded-xl border border-slate-200 px-3 py-2" type="number" min="1" placeholder="Pickup floor" value={form.pickupFloor} onChange={(e) => setValue("pickupFloor", e.target.value)} />
-                <input className="rounded-xl border border-slate-200 px-3 py-2" type="number" min="1" placeholder="Dropoff floor" value={form.dropoffFloor} onChange={(e) => setValue("dropoffFloor", e.target.value)} />
-              </div>
-
-              <div className="mt-4 grid gap-3 md:grid-cols-2">
-                <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.pickupHasElevator} onChange={(e) => setValue("pickupHasElevator", e.target.checked)} /> Pickup has elevator</label>
-                <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.dropoffHasElevator} onChange={(e) => setValue("dropoffHasElevator", e.target.checked)} /> Dropoff has elevator</label>
-                <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.pickupHasNarrowStairs} onChange={(e) => setValue("pickupHasNarrowStairs", e.target.checked)} /> Pickup has narrow stairs</label>
-                <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.dropoffHasNarrowStairs} onChange={(e) => setValue("dropoffHasNarrowStairs", e.target.checked)} /> Dropoff has narrow stairs</label>
-              </div>
-
-              <div className="mt-6 flex justify-between">
-                <Button type="button" variant="secondary" onClick={() => setStep(2)}>Back</Button>
-                <Button type="button" onClick={() => setStep(4)}>Continue</Button>
+              <div className="mt-8 flex justify-between">
+                <Button variant="secondary" onClick={() => setStep(2)}>Back</Button>
+                <Button onClick={() => setStep(4)} disabled={!step3Valid}>Review Request</Button>
               </div>
             </Card>
           )}
 
           {step === 4 && (
-            <Card className="p-6">
-              <h2 className="text-2xl font-bold text-[#1B2A4A]">Step 4: Contact details</h2>
-              <div className="mt-4 grid gap-3 md:grid-cols-2">
-                <input className="rounded-xl border border-slate-200 px-3 py-2" placeholder="First name" value={form.firstName} onChange={(e) => setValue("firstName", e.target.value)} />
-                <input className="rounded-xl border border-slate-200 px-3 py-2" placeholder="Last name" value={form.lastName} onChange={(e) => setValue("lastName", e.target.value)} />
-                <input className="rounded-xl border border-slate-200 px-3 py-2" placeholder="Email" value={form.email} onChange={(e) => setValue("email", e.target.value)} />
-                <input className="rounded-xl border border-slate-200 px-3 py-2" placeholder="Phone" value={form.phone} onChange={(e) => setValue("phone", e.target.value)} />
+            <Card className="p-8">
+              <h2 className="text-xl font-bold text-[#1B2A4A]">Review Your Request</h2>
+              <p className="mt-1 text-sm text-slate-500">Please confirm your details before submitting.</p>
+
+              <div className="mt-6 space-y-4">
+                <ReviewSection title="Contact">
+                  <ReviewRow label="Name" value={`${contact.firstName} ${contact.lastName}`} />
+                  <ReviewRow label="Email" value={contact.email} />
+                  <ReviewRow label="Phone" value={contact.phone} />
+                </ReviewSection>
+
+                <ReviewSection title="Move Details">
+                  <ReviewRow label="From" value={move.pickupAddress} />
+                  <ReviewRow label="To" value={move.dropoffAddress} />
+                  <ReviewRow label="Date" value={move.moveDate} />
+                  <ReviewRow label="Time" value={move.preferredTime} />
+                </ReviewSection>
+
+                <ReviewSection title={`Items (${items.length})`}>
+                  {items.map((item, i) => (
+                    <div key={i} className="flex items-start justify-between py-2">
+                      <div>
+                        <span className="text-sm font-medium text-slate-700">{item.label}</span>
+                        {item.isFragile && <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">Fragile</span>}
+                        {item.description && <p className="mt-0.5 text-xs text-slate-500">{item.description}</p>}
+                      </div>
+                      <span className="ml-4 shrink-0 text-sm text-slate-500">×{item.quantity}</span>
+                    </div>
+                  ))}
+                </ReviewSection>
               </div>
-              <div className="mt-6 flex justify-between">
-                <Button type="button" variant="secondary" onClick={() => setStep(3)}>Back</Button>
-                <Button type="button" onClick={() => setStep(5)}>Continue</Button>
+
+              <p className="mt-5 rounded-xl bg-blue-50 p-4 text-sm text-blue-700">
+                After submitting, our team will review your request and contact you within 24 hours to confirm scheduling and discuss next steps.
+              </p>
+
+              {error && <p className="mt-4 rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+
+              <div className="mt-8 flex justify-between">
+                <Button variant="secondary" onClick={() => setStep(3)}>Back</Button>
+                <Button onClick={submit} disabled={loading}>{loading ? "Submitting…" : "Submit Request"}</Button>
               </div>
             </Card>
           )}
-
-          {step === 5 && (
-            <Card className="p-6">
-              <h2 className="text-2xl font-bold text-[#1B2A4A]">Step 5: Review and request booking</h2>
-              <div className="mt-4 rounded-xl bg-[#F4F6F9] p-4 text-sm text-slate-700">
-                <p><span className="font-semibold">Service:</span> {SERVICE_TYPES.find((item) => item.key === form.serviceType)?.title}</p>
-                <p><span className="font-semibold">Pickup:</span> {form.pickupAddress}</p>
-                <p><span className="font-semibold">Dropoff:</span> {form.dropoffAddress}</p>
-                <p><span className="font-semibold">Move date:</span> {form.moveDate || "TBD"} ({form.preferredTime})</p>
-                <p><span className="font-semibold">Customer:</span> {form.firstName} {form.lastName} ({form.phone})</p>
-              </div>
-              <p className="mt-3 rounded-xl bg-amber-50 p-3 text-xs text-amber-700">This is an estimate only. Final pricing may vary based on actual conditions.</p>
-
-              {error && <p className="mt-3 rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}
-
-              {!createdBooking ? (
-                <div className="mt-6 flex justify-between">
-                  <Button type="button" variant="secondary" onClick={() => setStep(4)}>Back</Button>
-                  <Button type="button" onClick={submitBooking} disabled={loading}>{loading ? "Submitting..." : "Request Booking"}</Button>
-                </div>
-              ) : (
-                <div className="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
-                  <p className="font-semibold text-emerald-700">Booking request submitted: {createdBooking.bookingRef}</p>
-                  <p className="mt-1 text-sm text-slate-700">Our team will review your request and contact you with final confirmation.</p>
-                  <div className="mt-4 flex flex-wrap gap-3">
-                    <Link className="rounded-xl bg-[#1B2A4A] px-4 py-2 text-sm font-semibold text-white" to="/">Back to Home</Link>
-                    <Link className="rounded-xl border border-[#1B2A4A]/20 px-4 py-2 text-sm font-semibold text-[#1B2A4A]" to="/quote">Create Another Estimate</Link>
-                  </div>
-                </div>
-              )}
-            </Card>
-          )}
-        </div>
-
-        <div>
-          <PriceSummary breakdown={price} />
         </div>
       </div>
     </section>
   );
 }
 
-function normalizeItem(item = {}) {
-  return {
-    itemKey: item.itemKey || item.key,
-    label: item.label,
-    quantity: Number(item.quantity || 0),
-    volumeScore: Number(item.volumeScore || 0),
-    weightScore: Number(item.weightScore || 0),
-    isFragile: Boolean(item.isFragile),
-    isHeavy: Boolean(item.isHeavy)
-  };
+const inputCls = "w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-[#1B2A4A] focus:outline-none focus:ring-1 focus:ring-[#1B2A4A]";
+
+function Field({ label, required, children }) {
+  return (
+    <div>
+      <label className="mb-1.5 block text-sm font-medium text-slate-700">
+        {label} {required && <span className="text-red-500">*</span>}
+      </label>
+      {children}
+    </div>
+  );
+}
+
+function ReviewSection({ title, children }) {
+  return (
+    <div className="rounded-xl border border-slate-200 p-4">
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">{title}</p>
+      <div className="divide-y divide-slate-100">{children}</div>
+    </div>
+  );
+}
+
+function ReviewRow({ label, value }) {
+  return (
+    <div className="flex items-start justify-between py-1.5">
+      <span className="text-sm text-slate-500">{label}</span>
+      <span className="ml-4 text-right text-sm font-medium text-slate-700">{value}</span>
+    </div>
+  );
 }
