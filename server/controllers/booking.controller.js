@@ -3,7 +3,7 @@ import Booking from "../models/Booking.js";
 import { generateBookingRef } from "../utils/helpers.js";
 import { apiResponse } from "../utils/response.js";
 import { calculatePrice } from "../services/pricing.service.js";
-import { emailTemplate, sendEmail } from "../services/notification.service.js";
+import { sendEmail, customerConfirmationEmail, ownerNotificationEmail } from "../services/notification.service.js";
 
 function snapshotFromPayload(snapshot = {}) {
   return {
@@ -33,26 +33,38 @@ export async function createBooking(req, res, next) {
       statusHistory: [{ status: "quote", timestamp: new Date(), note: "Booking request submitted", updatedBy: "public" }]
     });
 
-    const selectedItems = Array.isArray(booking.selectedItems)
-      ? booking.selectedItems.map((item) => `${item.label} x${item.quantity}`).join(", ")
-      : "No items provided";
+    const items = Array.isArray(booking.selectedItems) ? booking.selectedItems : [];
+    const emailData = {
+      bookingRef: booking.bookingRef,
+      customer: {
+        firstName: booking.customerSnapshot?.firstName || "",
+        lastName: booking.customerSnapshot?.lastName || "",
+        email: booking.customerSnapshot?.email || "",
+        phone: booking.customerSnapshot?.phone || ""
+      },
+      pickupAddress: booking.pickup?.address || "N/A",
+      dropoffAddress: booking.dropoff?.address || "N/A",
+      moveDate: booking.moveDate || "TBD",
+      preferredTime: booking.preferredTime || "N/A",
+      items
+    };
 
-    const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL || process.env.SMTP_USER;
-    if (adminEmail) {
+    // Confirmation to customer
+    if (emailData.customer.email) {
       await sendEmail({
-        to: adminEmail,
-        subject: `New Booking Request ${booking.bookingRef}`,
-        html: emailTemplate(
-          "New Booking Request",
-          `<p><strong>Customer:</strong> ${booking.customerSnapshot?.firstName || ""} ${booking.customerSnapshot?.lastName || ""}</p>
-           <p><strong>Phone:</strong> ${booking.customerSnapshot?.phone || "N/A"}</p>
-           <p><strong>Pickup:</strong> ${booking.pickup?.address || "N/A"}</p>
-           <p><strong>Dropoff:</strong> ${booking.dropoff?.address || "N/A"}</p>
-           <p><strong>Items:</strong> ${selectedItems}</p>
-           <p><strong>Estimated Price:</strong> CAD $${((booking.pricing?.totalEstimate || 0) / 100).toFixed(2)}</p>`
-        )
+        to: emailData.customer.email,
+        subject: `Your moving request has been received — ${booking.bookingRef}`,
+        html: customerConfirmationEmail({ firstName: emailData.customer.firstName, ...emailData })
       });
     }
+
+    // Full details to owner
+    const ownerEmail = process.env.OWNER_EMAIL || "edgemovingsolution@gmail.com";
+    await sendEmail({
+      to: ownerEmail,
+      subject: `New Booking Request — ${booking.bookingRef}`,
+      html: ownerNotificationEmail(emailData)
+    });
 
     return apiResponse(res, 201, true, booking, "Booking request submitted");
   } catch (e) { next(e); }
