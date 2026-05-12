@@ -18,7 +18,7 @@ function getResend() {
 export async function sendEmail({ to, subject, html }) {
   if (!process.env.RESEND_API_KEY) return;
   await getResend().emails.send({
-    from: `Edge Moving Solutions <onboarding@resend.dev>`,
+    from: `Edge Moving Solutions <noreply@edgemovingsolutions.ca>`,
     to,
     subject,
     html
