@@ -5,7 +5,6 @@ import morgan from "morgan";
 import helmet from "helmet";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import { Server } from "socket.io";
 
 import connectDB from "./config/db.js";
 import authRoutes from "./routes/auth.routes.js";
@@ -21,8 +20,6 @@ import { startReminderCron } from "./services/reminder.service.js";
 dotenv.config();
 
 const app = express();
-const server = http.createServer(app);
-export const io = new Server(server, { cors: { origin: process.env.CLIENT_URL, credentials: true } });
 
 const allowedOrigins = process.env.CLIENT_URL
   ? process.env.CLIENT_URL.split(",").map((o) => o.trim())
@@ -34,6 +31,16 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(morgan("dev"));
+
+// Lazily connect to MongoDB — cached across serverless invocations
+let dbConnected = false;
+app.use(async (_req, _res, next) => {
+  if (!dbConnected) {
+    await connectDB();
+    dbConnected = true;
+  }
+  next();
+});
 
 app.get("/api/health", (_req, res) => res.json({ success: true, message: "OK", data: null }));
 app.use("/api/auth", authRoutes);
@@ -47,17 +54,14 @@ app.use("/api/maps", mapsRoutes);
 app.use(notFound);
 app.use(errorHandler);
 
-const startServer = async () => {
-  if (!process.env.MONGODB_URI) {
-    console.error("Missing MONGODB_URI");
-    process.exit(1);
-  }
-  await connectDB();
-  startReminderCron();
+// Local dev only — Vercel uses the exported app directly
+if (process.env.NODE_ENV !== "production") {
+  const server = http.createServer(app);
   const port = process.env.PORT || 5000;
-  server.listen(port, () => console.log(`Server running on ${port}`));
-};
-
-startServer();
+  server.listen(port, () => {
+    console.log(`Server running on ${port}`);
+    startReminderCron();
+  });
+}
 
 export default app;
