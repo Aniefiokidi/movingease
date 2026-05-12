@@ -1,7 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import Card from "../components/common/Card";
-import api from "../services/api";
 
 const SEED_TESTIMONIALS = [
   {
@@ -48,18 +47,6 @@ export default function Home() {
   const [submitting, setSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
-  useEffect(() => {
-    api.get("/testimonials")
-      .then((res) => {
-        const data = res.data?.data;
-        if (Array.isArray(data) && data.length > 0) {
-          setTestimonials([...data, ...SEED_TESTIMONIALS]);
-        }
-      })
-      .catch(() => {
-        // backend unavailable — keep seed data shown
-      });
-  }, []);
 
   function handleReviewInput(event) {
     const { name, value } = event.target;

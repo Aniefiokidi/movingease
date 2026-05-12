@@ -1,10 +1,11 @@
 import mongoose from "mongoose";
 
-let cached = global._mongooseConnection;
-
 export default async function connectDB() {
-  if (cached && cached.readyState === 1) return;
-  cached = await mongoose.connect(process.env.MONGODB_URI);
-  global._mongooseConnection = mongoose.connection;
+  // Reuse existing connection across serverless invocations
+  if (mongoose.connection.readyState === 1) return;
+  await mongoose.connect(process.env.MONGODB_URI, {
+    serverSelectionTimeoutMS: 5000,
+    socketTimeoutMS: 8000
+  });
   console.log("MongoDB connected");
 }

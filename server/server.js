@@ -32,14 +32,14 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(morgan("dev"));
 
-// Lazily connect to MongoDB — cached across serverless invocations
-let dbConnected = false;
+// Connect to MongoDB — mongoose caches the connection across warm invocations
 app.use(async (_req, _res, next) => {
-  if (!dbConnected) {
+  try {
     await connectDB();
-    dbConnected = true;
+    next();
+  } catch (err) {
+    next(err);
   }
-  next();
 });
 
 app.get("/api/health", (_req, res) => res.json({ success: true, message: "OK", data: null }));
