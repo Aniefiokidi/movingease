@@ -17,11 +17,11 @@ router.get("/", async (_req, res, next) => {
 // Public — submit a testimonial
 router.post("/", async (req, res, next) => {
   try {
-    const { name, location, quote } = req.body;
+    const { name, location, quote, rating } = req.body;
     if (!name || !location || !quote) {
       return apiResponse(res, 400, false, null, "name, location and quote are required");
     }
-    const testimonial = await Testimonial.create({ name, location, quote });
+    const testimonial = await Testimonial.create({ name, location, quote, ...(rating ? { rating: Number(rating) } : {}) });
     return apiResponse(res, 201, true, testimonial, "Testimonial added");
   } catch (err) {
     next(err);

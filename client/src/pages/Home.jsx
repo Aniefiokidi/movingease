@@ -43,7 +43,7 @@ const SEED_TESTIMONIALS = [
 
 export default function Home() {
   const [testimonials, setTestimonials] = useState(SEED_TESTIMONIALS);
-  const [reviewForm, setReviewForm] = useState({ name: "", location: "", quote: "" });
+  const [reviewForm, setReviewForm] = useState({ name: "", location: "", quote: "", rating: 5 });
   const [submitting, setSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
@@ -58,18 +58,18 @@ export default function Home() {
     const name = reviewForm.name.trim();
     const location = reviewForm.location.trim();
     const quote = reviewForm.quote.trim();
+    const rating = reviewForm.rating;
     if (!name || !location || !quote) return;
 
     setSubmitting(true);
     try {
-      const res = await api.post("/testimonials", { name, location, quote });
+      const res = await api.post("/testimonials", { name, location, quote, rating });
       const saved = res.data?.data;
-      setTestimonials((current) => [saved || { _id: `local-${Date.now()}`, name, location, quote }, ...current]);
+      setTestimonials((current) => [saved || { _id: `local-${Date.now()}`, name, location, quote, rating }, ...current]);
     } catch {
-      // optimistic fallback if backend is down
-      setTestimonials((current) => [{ _id: `local-${Date.now()}`, name, location, quote }, ...current]);
+      setTestimonials((current) => [{ _id: `local-${Date.now()}`, name, location, quote, rating }, ...current]);
     } finally {
-      setReviewForm({ name: "", location: "", quote: "" });
+      setReviewForm({ name: "", location: "", quote: "", rating: 5 });
       setSubmitting(false);
       setSubmitSuccess(true);
       setTimeout(() => setSubmitSuccess(false), 4000);
@@ -87,7 +87,7 @@ export default function Home() {
         />
         <div className="absolute inset-0 bg-[#1B2A4A]/70" />
         <div className="section-wrap relative z-10">
-          <div className="grid gap-6 rounded-3xl bg-white/95 p-8 shadow-lg md:grid-cols-[1.2fr_1fr] md:p-12">
+          <div className="rounded-3xl bg-white/95 p-8 shadow-lg md:p-12">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#C0272D]">Edge Moving Solution Ltd.</p>
               <h1 className="mt-3 text-4xl font-black leading-tight text-[#1B2A4A] md:text-5xl">Reliable Moving Services Across New Brunswick</h1>
@@ -98,24 +98,6 @@ export default function Home() {
               </div>
             </div>
 
-            <Card className="grid grid-cols-2 gap-3 p-5">
-              <div className="rounded-xl bg-[#F4F6F9] p-3">
-                <p className="text-xs uppercase tracking-wide text-slate-500">Average request time</p>
-                <p className="mt-2 text-2xl font-bold text-[#1B2A4A]">60 sec</p>
-              </div>
-              <div className="rounded-xl bg-[#F4F6F9] p-3">
-                <p className="text-xs uppercase tracking-wide text-slate-500">Customer rating</p>
-                <p className="mt-2 text-2xl font-bold text-[#1B2A4A]">4.9/5</p>
-              </div>
-              <div className="rounded-xl bg-[#F4F6F9] p-3">
-                <p className="text-xs uppercase tracking-wide text-slate-500">Moves completed</p>
-                <p className="mt-2 text-2xl font-bold text-[#1B2A4A]">1,200+</p>
-              </div>
-              <div className="rounded-xl bg-[#F4F6F9] p-3">
-                <p className="text-xs uppercase tracking-wide text-slate-500">On-time rate</p>
-                <p className="mt-2 text-2xl font-bold text-[#1B2A4A]">98%</p>
-              </div>
-            </Card>
           </div>
         </div>
       </section>
@@ -181,7 +163,7 @@ export default function Home() {
               <div className="mt-4 border-t border-slate-100 pt-3">
                 <p className="text-sm font-semibold text-[#1B2A4A]">{item.name}</p>
                 <p className="text-xs text-slate-400">{item.location}, NB</p>
-                <p className="mt-1 text-xs font-medium text-amber-500">★★★★★</p>
+                <p className="mt-1 text-xs font-medium text-amber-500">{"★".repeat(item.rating ?? 5)}{"☆".repeat(5 - (item.rating ?? 5))}</p>
               </div>
             </Card>
           ))}
@@ -216,6 +198,19 @@ export default function Home() {
               placeholder="City (e.g. Moncton)"
               required
             />
+            <div className="md:col-span-2">
+              <p className="mb-1.5 text-sm font-medium text-slate-600">Your Rating</p>
+              <div className="flex gap-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setReviewForm((f) => ({ ...f, rating: star }))}
+                    className={`text-2xl transition ${star <= reviewForm.rating ? "text-amber-400" : "text-slate-300"}`}
+                  >★</button>
+                ))}
+              </div>
+            </div>
             <textarea
               className="min-h-28 rounded-xl border border-slate-200 px-3 py-2 text-sm md:col-span-2"
               name="quote"

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Button from "../components/common/Button";
 import Card from "../components/common/Card";
@@ -6,18 +6,34 @@ import Stepper from "../components/common/Stepper";
 import { createBooking } from "../services/booking.service";
 
 const PREFERRED_TIMES = ["Morning (8am–12pm)", "Afternoon (12pm–5pm)", "Evening (5pm–8pm)"];
+const STORAGE_KEY = "quote_draft";
+
+function loadDraft() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
 
 export default function Quote() {
-  const [step, setStep] = useState(1);
+  const draft = loadDraft();
+
+  const [step, setStep] = useState(draft?.step ?? 1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [bookingRef, setBookingRef] = useState("");
 
-  const [contact, setContact] = useState({ firstName: "", lastName: "", email: "", phone: "" });
-  const [move, setMove] = useState({ pickupAddress: "", dropoffAddress: "", moveDate: "", preferredTime: PREFERRED_TIMES[0] });
-  const [items, setItems] = useState([]);
+  const [contact, setContact] = useState(draft?.contact ?? { firstName: "", lastName: "", email: "", phone: "" });
+  const [move, setMove] = useState(draft?.move ?? { pickupAddress: "", dropoffAddress: "", moveDate: "", preferredTime: PREFERRED_TIMES[0] });
+  const [items, setItems] = useState(draft?.items ?? []);
   const [newItem, setNewItem] = useState({ label: "", quantity: 1, isFragile: false, description: "" });
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ step, contact, move, items }));
+  }, [step, contact, move, items]);
 
   const setContactVal = (k, v) => setContact((c) => ({ ...c, [k]: v }));
   const setMoveVal = (k, v) => setMove((m) => ({ ...m, [k]: v }));
@@ -71,6 +87,7 @@ export default function Quote() {
       };
 
       const res = await createBooking(payload);
+      localStorage.removeItem(STORAGE_KEY);
       setBookingRef(res.data.data.bookingRef);
       setSubmitted(true);
     } catch (e) {
@@ -96,7 +113,7 @@ export default function Quote() {
           <p className="mt-4 inline-block rounded-xl bg-[#1B2A4A]/5 px-4 py-2 font-mono text-sm font-semibold text-[#1B2A4A]">Ref: {bookingRef}</p>
           <div className="mt-8 flex justify-center gap-3">
             <Link to="/" className="rounded-xl bg-[#1B2A4A] px-6 py-3 text-sm font-semibold text-white hover:bg-[#0f1e35] transition">Back to Home</Link>
-            <button onClick={() => { setSubmitted(false); setStep(1); setContact({ firstName: "", lastName: "", email: "", phone: "" }); setMove({ pickupAddress: "", dropoffAddress: "", moveDate: "", preferredTime: PREFERRED_TIMES[0] }); setItems([]); setBookingRef(""); }} className="rounded-xl border border-[#1B2A4A]/20 px-6 py-3 text-sm font-semibold text-[#1B2A4A] hover:bg-slate-50 transition">New Request</button>
+            <button onClick={() => { localStorage.removeItem(STORAGE_KEY); setSubmitted(false); setStep(1); setContact({ firstName: "", lastName: "", email: "", phone: "" }); setMove({ pickupAddress: "", dropoffAddress: "", moveDate: "", preferredTime: PREFERRED_TIMES[0] }); setItems([]); setBookingRef(""); }} className="rounded-xl border border-[#1B2A4A]/20 px-6 py-3 text-sm font-semibold text-[#1B2A4A] hover:bg-slate-50 transition">New Request</button>
           </div>
         </div>
       </section>
@@ -258,7 +275,7 @@ export default function Quote() {
 
               <div className="mt-8 flex justify-between">
                 <Button variant="secondary" onClick={() => setStep(2)}>Back</Button>
-                <Button onClick={() => setStep(4)} disabled={!step3Valid}>Review Request</Button>
+                <Button onClick={() => { if (newItem.label.trim()) addItem(); setStep(4); }} disabled={items.length === 0 && !newItem.label.trim()}>Review Request</Button>
               </div>
             </Card>
           )}

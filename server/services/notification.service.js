@@ -47,7 +47,7 @@ function baseLayout(content) {
         <!-- Footer -->
         <tr>
           <td style="background:#F4F6F9;padding:20px 32px;text-align:center;border-top:1px solid #e2e8f0;">
-            <p style="margin:0;font-size:12px;color:#94a3b8;">Edge Moving Solutions Ltd. &nbsp;|&nbsp; 506-471-9393 &nbsp;|&nbsp; edgemovingsolution@gmail.com</p>
+            <p style="margin:0;font-size:12px;color:#94a3b8;">Edge Moving Solutions Ltd. &nbsp;|&nbsp; 506-471-9393 &nbsp;|&nbsp; edgemovingsolutions@gmail.com</p>
             <p style="margin:6px 0 0;font-size:12px;color:#94a3b8;">Monday – Saturday &nbsp;|&nbsp; 8:00 AM – 6:00 PM</p>
           </td>
         </tr>
