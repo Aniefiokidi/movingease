@@ -36,8 +36,8 @@ function baseLayout(content) {
 
         <!-- Header -->
         <tr>
-          <td style="background:${BRAND};padding:28px 32px;text-align:center;">
-            <img src="${LOGO_URL}" alt="Edge Moving Solutions Ltd." height="60" style="display:block;margin:0 auto;filter:brightness(0) invert(1);" />
+          <td style="background:#f1f5f9;padding:28px 32px;text-align:center;border-bottom:1px solid #e2e8f0;">
+            <img src="${LOGO_URL}" alt="Edge Moving Solutions Ltd." height="60" style="display:block;margin:0 auto;" />
           </td>
         </tr>
 
