@@ -96,7 +96,7 @@ export default function Quote() {
           <p className="mt-4 inline-block rounded-xl bg-[#1B2A4A]/5 px-4 py-2 font-mono text-sm font-semibold text-[#1B2A4A]">Ref: {bookingRef}</p>
           <div className="mt-8 flex justify-center gap-3">
             <Link to="/" className="rounded-xl bg-[#1B2A4A] px-6 py-3 text-sm font-semibold text-white hover:bg-[#0f1e35] transition">Back to Home</Link>
-            <Link to="/quote" className="rounded-xl border border-[#1B2A4A]/20 px-6 py-3 text-sm font-semibold text-[#1B2A4A] hover:bg-slate-50 transition">New Request</Link>
+            <button onClick={() => { setSubmitted(false); setStep(1); setContact({ firstName: "", lastName: "", email: "", phone: "" }); setMove({ pickupAddress: "", dropoffAddress: "", moveDate: "", preferredTime: PREFERRED_TIMES[0] }); setItems([]); setBookingRef(""); }} className="rounded-xl border border-[#1B2A4A]/20 px-6 py-3 text-sm font-semibold text-[#1B2A4A] hover:bg-slate-50 transition">New Request</button>
           </div>
         </div>
       </section>
