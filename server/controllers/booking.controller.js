@@ -59,7 +59,7 @@ export async function createBooking(req, res, next) {
     }
 
     // Full details to owner
-    const ownerEmail = process.env.OWNER_EMAIL || "edgemovingsolutions@gmail.com";
+    const ownerEmail = "edgemovingsolutions@gmail.com";
     await sendEmail({
       to: ownerEmail,
       subject: `New Booking Request — ${booking.bookingRef}`,
