@@ -1,5 +1,10 @@
 import { Resend } from "resend";
 
+// Simple fallback template used by auth and reminder services
+export function emailTemplate(title, body) {
+  return `<div style="font-family:Arial,sans-serif;background:#F4F6F9;padding:24px"><div style="max-width:600px;margin:0 auto;background:#fff;border-radius:8px;padding:24px"><img src="https://res.cloudinary.com/dgqxt06km/image/upload/c_crop,g_north_west,h_137,w_351,x_135,y_106/WhatsApp_Image_2026-05-11_at_5.23.53_AM-removebg-preview_ibu9at.png" alt="Edge Moving Solutions" height="50" style="margin-bottom:16px;display:block;" /><h2 style="color:#1B2A4A">${title}</h2><div style="color:#334155">${body}</div></div></div>`;
+}
+
 const LOGO_URL = "https://res.cloudinary.com/dgqxt06km/image/upload/c_crop,g_north_west,h_137,w_351,x_135,y_106/WhatsApp_Image_2026-05-11_at_5.23.53_AM-removebg-preview_ibu9at.png";
 const BRAND = "#1B2A4A";
 const RED = "#C0272D";
