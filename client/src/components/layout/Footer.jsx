@@ -21,7 +21,7 @@ export default function Footer() {
           <p>Sunday: By appointment</p>
         </div>
       </div>
-      <div className="border-t border-white/10 px-6 py-4 text-center text-xs text-slate-300">© {new Date().getFullYear()} Edge Moving Solution Ltd. All rights reserved.</div>
+      <div className="border-t border-white/10 px-6 py-4 text-center text-xs text-slate-300">© {new Date().getFullYear()} Edge Moving Solutions Ltd. All rights reserved.</div>
     </footer>
   );
 }

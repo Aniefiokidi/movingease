@@ -24,7 +24,7 @@ export async function register(req, res, next) {
     signAndSetToken(res, user._id);
     await sendEmail({
       to: user.email,
-      subject: "Welcome to Edge Moving Solution Ltd.",
+      subject: "Welcome to Edge Moving Solutions Ltd.",
       html: emailTemplate("Welcome", `Please verify your email: ${process.env.CLIENT_URL}/verify/${verificationToken}`)
     });
 

@@ -89,7 +89,7 @@ export default function Home() {
         <div className="section-wrap relative z-10">
           <div className="rounded-3xl bg-white/95 p-8 shadow-lg md:p-12">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#C0272D]">Edge Moving Solution Ltd.</p>
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#C0272D]">Edge Moving Solutions Ltd.</p>
               <h1 className="mt-3 text-4xl font-black leading-tight text-[#1B2A4A] md:text-5xl">Reliable Moving Services Across New Brunswick</h1>
               <p className="mt-4 max-w-xl text-slate-600">Submit your moving request in minutes and we'll get back to you within 24 hours.</p>
               <div className="mt-8 flex flex-wrap gap-3">
@@ -154,7 +154,7 @@ export default function Home() {
       <section className="section-wrap py-8">
         <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#C0272D]">People Who Moved With Us</p>
         <h2 className="mt-2 text-3xl font-bold text-[#1B2A4A]">Real moves. Real people.</h2>
-        <p className="mt-2 max-w-2xl text-sm text-slate-600">Here's what they had to say after moving with Edge Moving Solution.</p>
+        <p className="mt-2 max-w-2xl text-sm text-slate-600">Here's what they had to say after moving with Edge Moving Solutions.</p>
 
         <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {testimonials.map((item) => (
