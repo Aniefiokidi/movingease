@@ -91,30 +91,15 @@ export default function About() {
       {/* Who We Are */}
       <section className="section-wrap py-16">
         <div className="mx-auto max-w-7xl px-6">
-          <div className="grid gap-12 md:grid-cols-2 md:items-center">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#C0272D]">Who We Are</p>
-              <h2 className="mt-3 text-3xl font-bold text-[#1B2A4A]">A Moving Company Built on Trust</h2>
-              <p className="mt-4 leading-relaxed text-slate-600">
-                We understand that every move is important. That's why we focus on punctual service, affordable pricing, and customer satisfaction from start to finish. Whether you're moving your home, apartment, office, or heavy items, we treat every relocation as if it were our own.
-              </p>
-              <p className="mt-4 leading-relaxed text-slate-600">
-                Our team brings the right equipment, experience, and attitude to every job — so you can focus on what matters most while we take care of the rest.
-              </p>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                { stat: "1,200+", label: "Moves Completed" },
-                { stat: "4.9/5", label: "Customer Rating" },
-                { stat: "98%", label: "On-Time Rate" },
-                { stat: "5+", label: "Years in Service" }
-              ].map((item) => (
-                <Card key={item.label} className="p-6 text-center">
-                  <p className="text-3xl font-black text-[#C0272D]">{item.stat}</p>
-                  <p className="mt-1 text-sm font-medium text-slate-500">{item.label}</p>
-                </Card>
-              ))}
-            </div>
+          <div className="mx-auto max-w-3xl">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#C0272D]">Who We Are</p>
+            <h2 className="mt-3 text-3xl font-bold text-[#1B2A4A]">A Moving Company Built on Trust</h2>
+            <p className="mt-4 leading-relaxed text-slate-600">
+              We understand that every move is important. That's why we focus on punctual service, affordable pricing, and customer satisfaction from start to finish. Whether you're moving your home, apartment, office, or heavy items, we treat every relocation as if it were our own.
+            </p>
+            <p className="mt-4 leading-relaxed text-slate-600">
+              Our team brings the right equipment, experience, and attitude to every job — so you can focus on what matters most while we take care of the rest.
+            </p>
           </div>
         </div>
       </section>
